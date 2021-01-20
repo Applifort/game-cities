@@ -1,126 +1,100 @@
-const cities = ['москва', 'санкт-петербург', 'смоленск', 'алушта', 'геленджик', 'курск', 'казань', 'нижний', 'архангельск']
+const CITIES = ['москва', 'санкт-петербург', 'смоленск', 'алушта', 'геленджик', 'курск', 'казань', 'нижний', 'архангельск']
+const EXCEPTED_LETTERS = ['ъ', 'ь' ,'ы'];
 
 const players = {
   computer: 'Computer',
   user: 'User', 
 };
 
-const forbiddenLetters = ['ъ', 'ь' ,'ы'];
-
-const getRandomNumberFromZeroTo = (max) => {
-  return Math.floor(Math.random() * Math.floor(max));
-};
+const getRandomNumberFromZeroTo = (max) => Math.floor(Math.random() * Math.floor(max));
 
 const getLastLetter = (city) => {
   const reversedCityName =  city.split('').reverse().join('');
   const lastLetter = reversedCityName.charAt(0);
-
-  if (forbiddenLetters.includes(lastLetter)) {
+  if (EXCEPTED_LETTERS.includes(lastLetter)) {
     return reversedCityName.charAt(1);
   }
   return lastLetter;
 };
 
-const isEmpty = (elements) => {
-  return elements.length === 0;
-};
-
-const capitalizeFirstLetter = (string) => {
-  return string.charAt(0).toUpperCase() + string.slice(1);
-};
+const isEmpty = (elements) => elements.length === 0;
+const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + string.slice(1);
+const getDefaultCity = (cities) => cities[getRandomNumberFromZeroTo(cities.length - 1)];
 
 const App = () => {
-  const gameState = {
+  const state = {
     player: players.user,
-    state: 'start',
-    currentCity: 'Москва',
-    userAttempts: 1,
-    usedCities: ['Mосква'],
+    state: 'playing',
+    usedCities: [getDefaultCity(CITIES)],
   };
+
+  const getLastCity = (cities) => cities.slice(-1)[0];
   
   const getAvailableCities = () => {
-    return cities.filter((city) => !gameState.usedCities.includes(city) && getLastLetter(gameState.currentCity) === city.charAt(0));
+    const lastCity = getLastCity(state.usedCities);
+    return CITIES.filter((city) => !state.usedCities.includes(city) && getLastLetter(lastCity) === city.charAt(0));
   };
-  
+
   const makeComputerStep = () => {
-    if (gameState.state == 'finish') return;
+    if (state.state == 'finish') return;
   
-    gameState.player = players.user;
-  
+    state.player = players.user;
     const availableCities = getAvailableCities();
   
     if (isEmpty(availableCities)) {
-      gameState.state = 'finish';
+      state.state = 'finish';
       return;
     }
   
     const city = availableCities[getRandomNumberFromZeroTo(availableCities.length - 1)];
-    gameState.usedCities.push(city);
-    gameState.currentCity = city;
+    state.usedCities = [...state.usedCities, city];
   };
   
   const makeUserStep = (city) => {
     const availableCities = getAvailableCities();
   
-    if (isEmpty(availableCities) || gameState.userAttempts > 2) {
-      gameState.state = 'finish';
-      gameState.player = players.computer;
+    if (isEmpty(availableCities) && !availableCities.includes(city)) {
+      state.state = 'finish';
+      state.player = players.computer;
       return;
     }
-  
-    if (availableCities.includes(city)) {
-      gameState.usedCities.push(city);
-      gameState.currentCity = city;
-      gameState.player = players.computer;
-      gameState.userAttempts = 1;
-    } else {
-      gameState.userAttempts += 1;
-    }
+
+    state.usedCities.push(city);
+    state.player = players.computer;
   };
   
   const render = () => {
-    if (gameState.state == 'finish') {
-      const container = document.querySelector(".container");;
-      container.innerHTML = '';
-      const h2 = document.createElement('h2');
-      h2.innerText = `Игра окончена, победитель ${gameState.player}`;
-      container.appendChild(h2);
+    if (state.state == 'finish') {
+      alert(`Игра окончена, победитель ${state.player}`);
       return;
     }
   
-    const citiesElement = document.getElementById('cities');
-    const ulElement = document.createElement('ul');
-    gameState.usedCities.forEach((city) => {
-      const li = document.createElement('li');
-      li.textContent = capitalizeFirstLetter(city);
-      ulElement.appendChild(li);
+    const citiesList = document.getElementById('cities');
+    citiesList.innerHTML = '';
+    state.usedCities.forEach((city) => {
+      const cityItem = document.createElement('li');
+      cityItem.textContent = capitalizeFirstLetter(city);
+      citiesList.appendChild(cityItem);
     })
-    citiesElement.innerHTML = '';
-    citiesElement.appendChild(ulElement);
   
     const currentCity = document.getElementById('city')
-    currentCity.textContent = capitalizeFirstLetter(gameState.currentCity);
+    const lastCity = getLastCity(state.usedCities);
+    currentCity.textContent = capitalizeFirstLetter(lastCity);
   };
   
-  const button = document.getElementById('button');
+  const citySendButton = document.getElementById('button');
 
   const handleEvent = () => {
     const input = document.getElementById('input');
     const userInput = input.value.toLowerCase();
     input.value = '';
   
-    if (gameState.player === players.user) {
-      makeUserStep(userInput);
-    }
-  
-    if (gameState.player === players.computer) {
-      makeComputerStep();
-    }
-  
+    if (state.player === players.user) makeUserStep(userInput);
+    if (state.player === players.computer) makeComputerStep();
     render();
   };
 
-  button.addEventListener('click', handleEvent);
+  citySendButton.addEventListener('click', handleEvent);
   render();
 };
 

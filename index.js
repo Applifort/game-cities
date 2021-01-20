@@ -1,4 +1,4 @@
-const CITIES = ['москва', 'санкт-петербург', 'смоленск', 'алушта', 'геленджик', 'курск', 'казань', 'нижний', 'архангельск']
+const CITIES = ['москва', 'санкт-петербург', 'смоленск', 'алушта', 'геленджик', 'курск', 'казань', 'нижний', 'архангельск', 'йошкар-ола']
 const EXCEPTED_LETTERS = ['ъ', 'ь' ,'ы'];
 
 const players = {
@@ -23,7 +23,7 @@ const getDefaultCity = (cities) => cities[getRandomNumberFromZeroTo(cities.lengt
 
 const App = () => {
   const state = {
-    player: players.user,
+    player: players.computer,
     state: 'playing',
     usedCities: [getDefaultCity(CITIES)],
   };
@@ -35,10 +35,18 @@ const App = () => {
     return CITIES.filter((city) => !state.usedCities.includes(city) && getLastLetter(lastCity) === city.charAt(0));
   };
 
+  const isGameFinished = () => state.state === 'finish';
+  const isGamePlaying = () => state.state === 'playing';
+
+  const isUser = (player) => player === players.user;
+
+  const togglePlayer = () => {
+    const currentPlayer = state.player;
+    const nextPlayer = isUser(currentPlayer) ? players.computer : players.user;
+    state.player = nextPlayer;
+  };
+
   const makeComputerStep = () => {
-    if (state.state == 'finish') return;
-  
-    state.player = players.user;
     const availableCities = getAvailableCities();
   
     if (isEmpty(availableCities)) {
@@ -48,27 +56,27 @@ const App = () => {
   
     const city = availableCities[getRandomNumberFromZeroTo(availableCities.length - 1)];
     state.usedCities = [...state.usedCities, city];
+    togglePlayer();
   };
   
   const makeUserStep = (city) => {
     const availableCities = getAvailableCities();
   
-    if (isEmpty(availableCities) && !availableCities.includes(city)) {
+    if (isEmpty(availableCities) || !availableCities.includes(city)) {
       state.state = 'finish';
-      state.player = players.computer;
       return;
     }
 
     state.usedCities.push(city);
-    state.player = players.computer;
+    togglePlayer();
   };
   
   const render = () => {
-    if (state.state == 'finish') {
+    if (isGameFinished()) {
       alert(`Игра окончена, победитель ${state.player}`);
       return;
     }
-  
+
     const citiesList = document.getElementById('cities');
     citiesList.innerHTML = '';
     state.usedCities.forEach((city) => {
@@ -76,25 +84,28 @@ const App = () => {
       cityItem.textContent = capitalizeFirstLetter(city);
       citiesList.appendChild(cityItem);
     })
-  
+
     const currentCity = document.getElementById('city')
     const lastCity = getLastCity(state.usedCities);
     currentCity.textContent = capitalizeFirstLetter(lastCity);
   };
-  
-  const citySendButton = document.getElementById('button');
 
-  const handleEvent = () => {
-    const input = document.getElementById('input');
-    const userInput = input.value.toLowerCase();
+  const citySendButton = document.getElementById('button');
+  const input = document.getElementById('input');
+
+  const handleInsertCity = () => {
+    const city = input.value.toLowerCase();
     input.value = '';
   
-    if (state.player === players.user) makeUserStep(userInput);
-    if (state.player === players.computer) makeComputerStep();
+    makeUserStep(city);
+    if (isGamePlaying()) {
+      makeComputerStep();
+    }
+    
     render();
   };
 
-  citySendButton.addEventListener('click', handleEvent);
+  citySendButton.addEventListener('click', handleInsertCity);
   render();
 };
 

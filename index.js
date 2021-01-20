@@ -37,7 +37,7 @@ const App = () => {
 
   const getRandomAvailableCity = (cities) => {
     if (isEmpty(cities)) return '';
-    return cities[getRandomNumberFromZeroTo(availableCities.length - 1)];
+    return cities[getRandomNumberFromZeroTo(cities.length - 1)];
   };
 
   const isGameFinished = () => state.state === 'finish';
@@ -50,9 +50,10 @@ const App = () => {
     state.player = nextPlayer;
   };
 
-  const makeStep = (cities, city) => {
-  
-    if (city === '' || !cities.include(city)) {
+  const makeStep = (city) => {
+    const cities = getAvailableCities(state.usedCities, CITIES);
+
+    if (city === '' || !cities.includes(city)) {
       state.state = 'finish';
       return;
     }
@@ -84,14 +85,14 @@ const App = () => {
   const input = document.getElementById('input');
 
   const handleInsertCity = () => {
-    const city = input.value.toLowerCase();
+    const userCity = input.value.toLowerCase();
     input.value = '';
-    const availableCities = getAvailableCities(state.usedCities, CITIES);
   
-    makeStep(availableCities, city);
+    makeStep(userCity);
     if (isGamePlaying()) {
-      const city = getRandomAvailableCity(availableCities);
-      makeStep(availableCities, city);
+      const availableCities = getAvailableCities(state.usedCities, CITIES);
+      const computerCity = getRandomAvailableCity(availableCities);
+      makeStep(computerCity);
     }
     
     render();

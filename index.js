@@ -30,14 +30,18 @@ const App = () => {
 
   const getLastCity = (cities) => cities.slice(-1)[0];
   
-  const getAvailableCities = () => {
-    const lastCity = getLastCity(state.usedCities);
-    return CITIES.filter((city) => !state.usedCities.includes(city) && getLastLetter(lastCity) === city.charAt(0));
+  const getAvailableCities = (usedCities, cities) => {
+    const lastCity = getLastCity(usedCities);
+    return cities.filter((city) => !usedCities.includes(city) && getLastLetter(lastCity) === city.charAt(0));
+  };
+
+  const getRandomAvailableCity = (cities) => {
+    if (isEmpty(cities)) return '';
+    return cities[getRandomNumberFromZeroTo(availableCities.length - 1)];
   };
 
   const isGameFinished = () => state.state === 'finish';
   const isGamePlaying = () => state.state === 'playing';
-
   const isUser = (player) => player === players.user;
 
   const togglePlayer = () => {
@@ -46,28 +50,14 @@ const App = () => {
     state.player = nextPlayer;
   };
 
-  const makeComputerStep = () => {
-    const availableCities = getAvailableCities();
+  const makeStep = (cities, city) => {
   
-    if (isEmpty(availableCities)) {
+    if (city === '' || !cities.include(city)) {
       state.state = 'finish';
       return;
     }
   
-    const city = availableCities[getRandomNumberFromZeroTo(availableCities.length - 1)];
     state.usedCities = [...state.usedCities, city];
-    togglePlayer();
-  };
-  
-  const makeUserStep = (city) => {
-    const availableCities = getAvailableCities();
-  
-    if (isEmpty(availableCities) || !availableCities.includes(city)) {
-      state.state = 'finish';
-      return;
-    }
-
-    state.usedCities.push(city);
     togglePlayer();
   };
   
@@ -96,10 +86,12 @@ const App = () => {
   const handleInsertCity = () => {
     const city = input.value.toLowerCase();
     input.value = '';
+    const availableCities = getAvailableCities(state.usedCities, CITIES);
   
-    makeUserStep(city);
+    makeStep(availableCities, city);
     if (isGamePlaying()) {
-      makeComputerStep();
+      const city = getRandomAvailableCity(availableCities);
+      makeStep(availableCities, city);
     }
     
     render();
